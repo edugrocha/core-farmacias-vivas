@@ -1,93 +1,77 @@
-# CRUD Django – Cadastro de Plantas
+# 🌿 API Core - Farmácias Vivas (IFPE)
 
-Projeto desenvolvido em **Django** com o objetivo de praticar a criação de um **CRUD (Create, Read, Update, Delete)**. A aplicação permite o cadastro e gerenciamento de informações sobre plantas, utilizando o PostgreSQL como banco de dados robusto, e **Bootstrap** para a estilização da interface.
+Bem-vindo ao repositório central do **Core Farmácias Vivas**, a API responsável por gerenciar toda a inteligência e o fluxo de dados do projeto de extensão no Instituto Federal de Pernambuco (IFPE) campus Jaboatão dos Guararapes. 
 
-## Funcionalidades
-- Cadastrar plantas  
-- Listar plantas cadastradas  
-- Atualizar informações  
-- Excluir registros  
+Este sistema foi projetado para centralizar o catálogo científico das plantas, a gestão geoespacial dos hortos parceiros e o controle de inventário.
 
-## Campos do cadastro
-- Nome  
-- Nome científico  
-- Descrição  
-- Partes utilizadas
-- Usos
-- Região  
-- Origem
+## 🏗️ Arquitetura do Projeto
 
-## Tecnologias utilizadas
-- Python  
-- Django  
-- PostgreSQL 
-- HTML  
-- Bootstrap  
-- Git e GitHub  
+O projeto foi construído utilizando **Django** e **Django Rest Framework (DRF)**, adotando uma arquitetura modular focada em escalabilidade e separação de domínios corporativos:
 
-## Como executar o projeto
-1. Clone o repositório:
+* **`config/`**: Configurações centrais do Django, com ambientes divididos (`base.py`, `development.py`, `production.py`).
+* **`apps/`**: Módulos de domínio da aplicação:
+    * `accounts/`: Gestão de usuários, perfis e autenticação (JWT).
+    * `botanica/`: Catálogo científico de plantas e usos terapêuticos.
+    * `hortos/`: Gestão e localização geoespacial das instituições parceiras.
+    * `inventario/`: Controle de estoque de plantas em cada horto.
+* **`core/`**: Utilitários transversais (paginação, exceções, permissões customizadas).
+* **`requirements/`**: Dependências separadas por ambiente de execução.
 
-   ```bash
-   git clone https://github.com/edugrocha/CRUD-cadastro-de-plantas.git
-   ```
-2. Acesse a pasta do projeto:
+## 🚀 Como executar o projeto localmente
 
-   ```bash
-   cd CRUD-cadastro-de-plantas
-   ```
-3. Crie e ative o ambiente virtual:
+As instruções abaixo são otimizadas para ambientes **Windows (PowerShell)**.
 
-   ```bash
-   python -m venv venv
+### 1. Clonar o repositório
+```powershell
+git clone https://github.com/SEU-USUARIO/core-farmacias-vivas.git
+cd core-farmacias-vivas
+```
 
-   # Linux / Mac
-   source venv/bin/activate
+### 2. Criar e ativar o ambiente virtual (venv)
+```powershell
+python -m venv venv
 
-   # Windows
-   venv\Scripts\activate
-   ```
-4. Instale as dependências
+# Linux / Mac
+source venv/bin/activate
 
-   ```bash
-   pip install -r requirements.txt
-   ```
-5. Crie o arquivo .env
+# Windows
+venv\Scripts\activate
+```
+*(Nota: Se houver erro de permissão de script no PowerShell, rode `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` antes de ativar o venv).*
 
-Na raiz do projeto (mesmo nível do manage.py), crie um arquivo chamado .env:
+### 3. Instalar as dependências
+Como estamos em fase de desenvolvimento, utilizaremos o arquivo específico para este ambiente:
+```powershell
+pip install -r requirements/development.txt
+```
 
-   ```bash
-   DB_NAME=CadastroPlantas
-   DB_USER=postgres
-   DB_PASSWORD=sua_senha_aqui
-   DB_HOST=127.0.0.1
-   DB_PORT=5432
-   ```
+### 4. Configurar as Variáveis de Ambiente
+Crie um arquivo `.env` na raiz do projeto baseando-se no arquivo de exemplo:
+```powershell
+cp .env.example .env
+```
+*Abra o arquivo `.env` gerado e preencha com as suas credenciais locais (Secret Key, URL do banco de dados, etc).*
 
-Importante:
-O arquivo .env não é versionado;
-Nunca suba credenciais diretamente no código;
-Cada ambiente (local, produção, servidor) deve possuir seu próprio .env.
+### 5. Aplicar as migrações no banco de dados
+```powershell
+python manage.py makemigrations
+python manage.py migrate
+```
 
-6. Execute as migrações:
+### 6. Iniciar o servidor
+```powershell
+python manage.py runserver
+```
+A API estará rodando em `http://127.0.0.1:8000/`.
 
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   ```
-7. Inicie o servidor:
+## 📋 Backlog e Gestão Ágil
 
-   ```bash
-   python manage.py runserver
-   ```
-8. Acesse no navegador:
+O desenvolvimento segue práticas ágeis. Os próximos passos e funcionalidades em desenvolvimento incluem:
+- [x] Reestruturação da arquitetura em módulos.
+- [ ] Configuração do Custom User Model no app `accounts`.
+- [ ] Mapeamento das tabelas de `botanica` (Família, Espécie, Usos).
+- [ ] Integração de buscas por proximidade (Geolocalização) no app `hortos`.
 
-   ```
-   http://127.0.0.1:8000/criar_plantas/
-   ```
-
-## Objetivo do projeto
-
-Projeto de estudo para consolidar os conceitos básicos do Django com PostgreSQL. 
-Servirá de MVP para o desenvolvimento de um sistema funcional.
-O sistema pertencerá ao projeto de extensão Farmácia Viva, no IFPE Jaboatão dos Guararapes, em parceria com o IFPE Vitória de Santo Antão.
+---
+*Desenvolvido pela gestão técnica do projeto de extensão Farmácias Vivas.*
+```
