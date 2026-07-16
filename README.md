@@ -19,50 +19,73 @@ O projeto foi construído utilizando **Django** e **Django Rest Framework (DRF)*
 
 ## 🚀 Como executar o projeto localmente
 
-As instruções abaixo são otimizadas para ambientes **Windows (PowerShell)**.
+Estas instruções foram organizadas para ficarem mais claras e funcionarem tanto em Linux/macOS quanto em Windows PowerShell.
 
 ### 1. Clonar o repositório
-```powershell
+```bash
 git clone https://github.com/SEU-USUARIO/core-farmacias-vivas.git
 cd core-farmacias-vivas
 ```
 
-### 2. Criar e ativar o ambiente virtual (venv)
-```powershell
-python -m venv venv
-
-# Linux / Mac
-source venv/bin/activate
-
-# Windows
-venv\Scripts\activate
+### 2. Criar e ativar o ambiente virtual
+```bash
+python -m venv .venv
 ```
-*(Nota: Se houver erro de permissão de script no PowerShell, rode `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` antes de ativar o venv).*
+
+Ative o ambiente conforme o seu sistema:
+```bash
+# Linux / macOS
+source .venv/bin/activate
+
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+```
+
+Se o comando `python` não estiver disponível, use `python3`.
 
 ### 3. Instalar as dependências
-Como estamos em fase de desenvolvimento, utilizaremos o arquivo específico para este ambiente:
-```powershell
+```bash
+pip install --upgrade pip
 pip install -r requirements/development.txt
 ```
 
-### 4. Configurar as Variáveis de Ambiente
-Crie um arquivo `.env` na raiz do projeto baseando-se no arquivo de exemplo:
-```powershell
+### 4. Configurar as variáveis de ambiente
+Copie o arquivo de exemplo para `.env` e ajuste os valores de acordo com o seu ambiente local:
+```bash
 cp .env.example .env
 ```
-*Abra o arquivo `.env` gerado e preencha com as suas credenciais locais (Secret Key, URL do banco de dados, etc).*
 
-### 5. Aplicar as migrações no banco de dados
+No Windows PowerShell, use:
 ```powershell
-python manage.py makemigrations
+Copy-Item .env.example .env
+```
+
+Abra o arquivo `.env` e preencha as informações locais, como `SECRET_KEY`, `DEBUG`, `DB_NAME`, `DB_USER` e `DB_PASSWORD`.
+
+### 5. Preparar o banco de dados
+Este projeto utiliza PostgreSQL com PostGIS. Crie um banco de dados e ajuste as configurações no arquivo `.env` para apontar para ele.
+
+Exemplo de criação do banco:
+```sql
+CREATE DATABASE core_farmacias_vivas;
+```
+
+### 6. Aplicar as migrações
+```bash
 python manage.py migrate
 ```
 
-### 6. Iniciar o servidor
-```powershell
+Se você alterar modelos no futuro, rode primeiro:
+```bash
+python manage.py makemigrations
+```
+
+### 7. Iniciar o servidor
+```bash
 python manage.py runserver
 ```
-A API estará rodando em `http://127.0.0.1:8000/`.
+
+A API estará disponível em `http://127.0.0.1:8000/`.
 
 ## 📋 Backlog e Gestão Ágil
 
