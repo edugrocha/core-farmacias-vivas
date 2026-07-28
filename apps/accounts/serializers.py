@@ -60,3 +60,26 @@ class PerfilDetalhadoSerializer(serializers.ModelSerializer):
                   'telefone', 'instituicao', 'tipo_perfil', 'foto_perfil',
                   'date_joined']
         read_only_fields = ['username', 'tipo_perfil', 'date_joined']
+
+
+class PerfilAdminSerializer(serializers.ModelSerializer):
+    """CRUD completo de perfis — uso exclusivo de administradores."""
+    class Meta:
+        model  = Usuario
+        fields = ['id', 'username', 'email', 'first_name', 'last_name',
+                  'telefone', 'instituicao', 'tipo_perfil', 'foto_perfil',
+                  'is_active', 'date_joined']
+        read_only_fields = ['username', 'date_joined']
+
+
+class PerfilAdminCreateSerializer(serializers.ModelSerializer):
+    """Criação de perfil por um administrador, com tipo_perfil já definido."""
+    password = serializers.CharField(write_only=True, min_length=8)
+
+    class Meta:
+        model  = Usuario
+        fields = ['id', 'username', 'email', 'first_name', 'last_name',
+                  'telefone', 'instituicao', 'tipo_perfil', 'password']
+
+    def create(self, validated_data):
+        return Usuario.objects.create_user(**validated_data)

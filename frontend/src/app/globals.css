@@ -1,0 +1,60 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+:root {
+  --background: #ffffff;
+  --foreground: #1c1f1c;
+
+  --color-primary-50: #eef6ee;
+  --color-primary-100: #d5e9d6;
+  --color-primary-500: #3e8e4f;
+  --color-primary-600: #2f6b3a;
+  --color-primary-700: #24552d;
+  --color-accent-500: #7cb342;
+
+  --color-success: #3e8e4f;
+  --color-warning: #d9a441;
+  --color-danger: #c0392b;
+  --color-info: #3b82c4;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-merriweather);
+
+  --color-primary-50: var(--color-primary-50);
+  --color-primary-100: var(--color-primary-100);
+  --color-primary-500: var(--color-primary-500);
+  --color-primary-600: var(--color-primary-600);
+  --color-primary-700: var(--color-primary-700);
+  --color-accent-500: var(--color-accent-500);
+
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+  --color-info: var(--color-info);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #10130f;
+    --foreground: #ecece9;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+}
+
+.font-cientifico {
+  font-family: var(--font-merriweather), Georgia, serif;
+  font-style: italic;
+}
+
+.leaflet-container {
+  border-radius: 0.75rem;
+}
