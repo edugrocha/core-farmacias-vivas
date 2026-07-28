@@ -1,7 +1,7 @@
 import { apiFetch, buildQuery } from "./client";
 import type { FamiliaBotanica, Paginacao } from "./types";
 
-export function listFamilias(params: { search?: string; page?: number } = {}) {
+export function listFamilias(params: { search?: string; page?: number; page_size?: number } = {}) {
   return apiFetch<Paginacao<FamiliaBotanica>>(`/familias/${buildQuery(params)}`);
 }
 

@@ -1,4 +1,4 @@
-import { apiFetch, buildQuery } from "./client";
+import { apiFetch, buildQuery, corpoRequisicao } from "./client";
 import type { Paginacao, Usuario } from "./types";
 
 export interface FiltrosPerfis {
@@ -6,6 +6,7 @@ export interface FiltrosPerfis {
   is_active?: boolean;
   search?: string;
   page?: number;
+  page_size?: number;
 }
 
 export function listPerfis(filtros: FiltrosPerfis = {}) {
@@ -49,9 +50,9 @@ export function getMeuPerfil() {
   return apiFetch<Usuario>(`/meu-perfil/`);
 }
 
-export function updateMeuPerfil(dados: Partial<Usuario>) {
+export function updateMeuPerfil(dados: Partial<Usuario> | FormData) {
   return apiFetch<Usuario>(`/meu-perfil/`, {
     method: "PATCH",
-    body: JSON.stringify(dados),
+    body: corpoRequisicao(dados),
   });
 }

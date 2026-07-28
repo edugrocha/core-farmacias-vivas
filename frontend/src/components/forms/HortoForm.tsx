@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Horto, Instituicao, StatusHorto, Usuario } from "@/lib/api/types";
+import type { Horto, StatusHorto } from "@/lib/api/types";
 import { listInstituicoes } from "@/lib/api/instituicoes";
 import { listPerfis } from "@/lib/api/perfis";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { Card } from "@/components/ui/Card";
 import { FormField, SelectField, TextareaField } from "@/components/ui/FormField";
+import { SearchSelect } from "@/components/ui/SearchSelect";
+import { ImageField } from "@/components/ui/ImageField";
 import { Button } from "@/components/ui/Button";
 import { ErrorBlock } from "@/components/ui/Spinner";
 import { mensagemErro } from "@/lib/format";
@@ -20,14 +22,12 @@ const statusOptions: { value: StatusHorto; label: string }[] = [
 
 interface HortoFormProps {
   inicial?: Partial<Horto>;
-  onSalvar: (dados: Partial<Horto>) => Promise<unknown>;
+  onSalvar: (dados: Partial<Horto> | FormData) => Promise<unknown>;
   titulo: string;
 }
 
 export function HortoForm({ inicial, onSalvar, titulo }: HortoFormProps) {
   const { usuario, isAdmin } = useAuth();
-  const [instituicoes, setInstituicoes] = useState<Instituicao[]>([]);
-  const [especialistas, setEspecialistas] = useState<Usuario[]>([]);
   const [form, setForm] = useState({
     nome: inicial?.nome ?? "",
     descricao: inicial?.descricao ?? "",
@@ -42,16 +42,10 @@ export function HortoForm({ inicial, onSalvar, titulo }: HortoFormProps) {
   });
   const [lat, setLat] = useState(inicial?.localizacao ? String(inicial.localizacao.coordinates[1]) : "");
   const [lon, setLon] = useState(inicial?.localizacao ? String(inicial.localizacao.coordinates[0]) : "");
+  const [foto, setFoto] = useState<File | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    listInstituicoes({ page: 1 }).then((r) => setInstituicoes(r.resultados));
-    if (isAdmin) {
-      listPerfis({ tipo_perfil: "ESPECIALISTA" }).then((r) => setEspecialistas(r.resultados));
-    }
-  }, [isAdmin]);
 
   function set<K extends keyof typeof form>(campo: K, valor: (typeof form)[K]) {
     setForm((f) => ({ ...f, [campo]: valor }));
@@ -76,7 +70,18 @@ export function HortoForm({ inicial, onSalvar, titulo }: HortoFormProps) {
       if (!inicial && !isAdmin && usuario) {
         payload.responsavel = usuario.id;
       }
-      await onSalvar(payload);
+
+      if (foto) {
+        const dadosComArquivo = new FormData();
+        for (const [chave, valor] of Object.entries(payload)) {
+          if (valor === null || valor === undefined) continue;
+          dadosComArquivo.append(chave, typeof valor === "object" ? JSON.stringify(valor) : String(valor));
+        }
+        dadosComArquivo.append("foto", foto);
+        await onSalvar(dadosComArquivo);
+      } else {
+        await onSalvar(payload);
+      }
       router.push("/painel/hortos");
     } catch (e) {
       setErro(mensagemErro(e));
@@ -89,25 +94,36 @@ export function HortoForm({ inicial, onSalvar, titulo }: HortoFormProps) {
     <Card className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-6">
       <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-100">{titulo}</h1>
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        <ImageField label="Foto do horto" fotoAtual={inicial?.foto} onChange={setFoto} />
         <FormField label="Nome" required value={form.nome} onChange={(e) => set("nome", e.target.value)} />
         <TextareaField label="Descrição" value={form.descricao} onChange={(e) => set("descricao", e.target.value)} />
 
-        <SelectField
+        <SearchSelect
           label="Instituição"
           required
-          placeholder="Selecione..."
-          value={form.instituicao || ""}
-          onChange={(e) => set("instituicao", Number(e.target.value))}
-          options={instituicoes.map((i) => ({ value: i.id, label: i.nome }))}
+          placeholder="Buscar instituição..."
+          valor={form.instituicao || null}
+          valorLabel={inicial?.instituicao_nome}
+          onChange={(v) => set("instituicao", v ?? 0)}
+          buscar={(query) =>
+            listInstituicoes({ search: query, page_size: 20 }).then((r) =>
+              r.resultados.map((i) => ({ value: i.id, label: i.nome }))
+            )
+          }
         />
 
         {isAdmin && (
-          <SelectField
+          <SearchSelect
             label="Responsável"
-            placeholder="Sem responsável definido"
-            value={form.responsavel ?? ""}
-            onChange={(e) => set("responsavel", e.target.value ? Number(e.target.value) : null)}
-            options={especialistas.map((u) => ({ value: u.id, label: `${u.first_name} ${u.last_name} (${u.username})` }))}
+            placeholder="Buscar especialista (opcional)..."
+            valor={form.responsavel ?? null}
+            valorLabel={inicial?.responsavel_nome}
+            onChange={(v) => set("responsavel", v)}
+            buscar={(query) =>
+              listPerfis({ search: query, tipo_perfil: "ESPECIALISTA", page_size: 20 }).then((r) =>
+                r.resultados.map((u) => ({ value: u.id, label: `${u.first_name} ${u.last_name} (${u.username})` }))
+              )
+            }
           />
         )}
 

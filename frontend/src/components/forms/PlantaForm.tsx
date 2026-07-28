@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { FamiliaBotanica, NivelToxicidade, Planta } from "@/lib/api/types";
+import type { NivelToxicidade, Planta } from "@/lib/api/types";
 import { listFamilias } from "@/lib/api/familias";
 import { Card } from "@/components/ui/Card";
 import { FormField, SelectField, TextareaField } from "@/components/ui/FormField";
+import { SearchSelect } from "@/components/ui/SearchSelect";
+import { ImageField } from "@/components/ui/ImageField";
 import { Button } from "@/components/ui/Button";
 import { ErrorBlock } from "@/components/ui/Spinner";
 import { mensagemErro } from "@/lib/format";
@@ -19,14 +21,15 @@ const toxicidadeOptions: { value: NivelToxicidade; label: string }[] = [
 
 interface PlantaFormProps {
   inicial?: Partial<Planta>;
-  onSalvar: (dados: Partial<Planta>) => Promise<unknown>;
+  onSalvar: (dados: Partial<Planta> | FormData) => Promise<unknown>;
   titulo: string;
 }
 
 export function PlantaForm({ inicial, onSalvar, titulo }: PlantaFormProps) {
-  const [familias, setFamilias] = useState<FamiliaBotanica[]>([]);
   const familiaInicial =
     typeof inicial?.familia === "object" ? inicial.familia?.id : inicial?.familia;
+  const familiaLabelInicial =
+    typeof inicial?.familia === "object" ? inicial.familia?.nome : inicial?.familia_nome;
 
   const [form, setForm] = useState({
     nome_popular: inicial?.nome_popular ?? "",
@@ -45,13 +48,10 @@ export function PlantaForm({ inicial, onSalvar, titulo }: PlantaFormProps) {
     referencias_bibliograficas: inicial?.referencias_bibliograficas ?? "",
     registro_anvisa: inicial?.registro_anvisa ?? "",
   });
+  const [foto, setFoto] = useState<File | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    listFamilias({ page: 1 }).then((r) => setFamilias(r.resultados));
-  }, []);
 
   function set<K extends keyof typeof form>(campo: K, valor: (typeof form)[K]) {
     setForm((f) => ({ ...f, [campo]: valor }));
@@ -62,7 +62,16 @@ export function PlantaForm({ inicial, onSalvar, titulo }: PlantaFormProps) {
     setSalvando(true);
     setErro(null);
     try {
-      await onSalvar(form);
+      if (foto) {
+        const dadosComArquivo = new FormData();
+        for (const [chave, valor] of Object.entries(form)) {
+          dadosComArquivo.append(chave, String(valor));
+        }
+        dadosComArquivo.append("foto_principal", foto);
+        await onSalvar(dadosComArquivo);
+      } else {
+        await onSalvar(form);
+      }
       router.push("/painel/plantas");
     } catch (e) {
       setErro(mensagemErro(e));
@@ -75,6 +84,7 @@ export function PlantaForm({ inicial, onSalvar, titulo }: PlantaFormProps) {
     <Card className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-6">
       <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-100">{titulo}</h1>
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        <ImageField label="Foto principal" fotoAtual={inicial?.foto_principal} onChange={setFoto} />
         <div className="grid grid-cols-2 gap-3">
           <FormField
             label="Nome popular"
@@ -95,13 +105,18 @@ export function PlantaForm({ inicial, onSalvar, titulo }: PlantaFormProps) {
           value={form.outros_nomes}
           onChange={(e) => set("outros_nomes", e.target.value)}
         />
-        <SelectField
+        <SearchSelect
           label="Família botânica"
           required
-          placeholder="Selecione..."
-          value={form.familia || ""}
-          onChange={(e) => set("familia", Number(e.target.value))}
-          options={familias.map((f) => ({ value: f.id, label: f.nome }))}
+          placeholder="Buscar família botânica..."
+          valor={form.familia || null}
+          valorLabel={familiaLabelInicial}
+          onChange={(v) => set("familia", v ?? 0)}
+          buscar={(query) =>
+            listFamilias({ search: query, page_size: 20 }).then((r) =>
+              r.resultados.map((f) => ({ value: f.id, label: f.nome }))
+            )
+          }
         />
         <TextareaField
           label="Descrição"

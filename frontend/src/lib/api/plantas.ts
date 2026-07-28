@@ -1,4 +1,4 @@
-import { apiFetch, buildQuery } from "./client";
+import { apiFetch, buildQuery, corpoRequisicao } from "./client";
 import type { Paginacao, Planta } from "./types";
 
 export interface FiltrosPlantas {
@@ -22,17 +22,17 @@ export function getPlanta(id: number | string) {
   return apiFetch<Planta>(`/plantas/${id}/`);
 }
 
-export function createPlanta(dados: Partial<Planta>) {
+export function createPlanta(dados: Partial<Planta> | FormData) {
   return apiFetch<Planta>(`/plantas/`, {
     method: "POST",
-    body: JSON.stringify(dados),
+    body: corpoRequisicao(dados),
   });
 }
 
-export function updatePlanta(id: number | string, dados: Partial<Planta>) {
+export function updatePlanta(id: number | string, dados: Partial<Planta> | FormData) {
   return apiFetch<Planta>(`/plantas/${id}/`, {
     method: "PATCH",
-    body: JSON.stringify(dados),
+    body: corpoRequisicao(dados),
   });
 }
 

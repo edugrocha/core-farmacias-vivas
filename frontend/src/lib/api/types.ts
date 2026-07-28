@@ -97,6 +97,7 @@ export interface Horto {
   instituicao: number;
   instituicao_nome?: string;
   responsavel: number | null;
+  responsavel_nome?: string;
   logradouro: string;
   municipio: string;
   uf: string;

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Disponibilidade, Horto, ItemInventario, Planta } from "@/lib/api/types";
+import type { Disponibilidade, ItemInventario } from "@/lib/api/types";
 import { listHortos } from "@/lib/api/hortos";
 import { listPlantas } from "@/lib/api/plantas";
 import { Card } from "@/components/ui/Card";
 import { FormField, SelectField, TextareaField } from "@/components/ui/FormField";
+import { SearchSelect } from "@/components/ui/SearchSelect";
 import { Button } from "@/components/ui/Button";
 import { ErrorBlock } from "@/components/ui/Spinner";
 import { mensagemErro } from "@/lib/format";
@@ -25,8 +26,6 @@ interface InventarioFormProps {
 }
 
 export function InventarioForm({ inicial, onSalvar, titulo }: InventarioFormProps) {
-  const [hortos, setHortos] = useState<Horto[]>([]);
-  const [plantas, setPlantas] = useState<Planta[]>([]);
   const [form, setForm] = useState({
     horto: inicial?.horto ?? 0,
     planta: inicial?.planta ?? 0,
@@ -37,11 +36,6 @@ export function InventarioForm({ inicial, onSalvar, titulo }: InventarioFormProp
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    listHortos({ page: 1 }).then((r) => setHortos(r.resultados));
-    listPlantas({ page: 1 }).then((r) => setPlantas(r.resultados));
-  }, []);
 
   function set<K extends keyof typeof form>(campo: K, valor: (typeof form)[K]) {
     setForm((f) => ({ ...f, [campo]: valor }));
@@ -65,21 +59,31 @@ export function InventarioForm({ inicial, onSalvar, titulo }: InventarioFormProp
     <Card className="mx-auto flex w-full max-w-lg flex-col gap-4 p-6">
       <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-100">{titulo}</h1>
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
-        <SelectField
+        <SearchSelect
           label="Horto"
           required
-          placeholder="Selecione..."
-          value={form.horto || ""}
-          onChange={(e) => set("horto", Number(e.target.value))}
-          options={hortos.map((h) => ({ value: h.id, label: h.nome }))}
+          placeholder="Buscar horto..."
+          valor={form.horto || null}
+          valorLabel={inicial?.horto_nome}
+          onChange={(v) => set("horto", v ?? 0)}
+          buscar={(query) =>
+            listHortos({ search: query, page_size: 20 }).then((r) =>
+              r.resultados.map((h) => ({ value: h.id, label: h.nome }))
+            )
+          }
         />
-        <SelectField
+        <SearchSelect
           label="Planta"
           required
-          placeholder="Selecione..."
-          value={form.planta || ""}
-          onChange={(e) => set("planta", Number(e.target.value))}
-          options={plantas.map((p) => ({ value: p.id, label: p.nome_popular }))}
+          placeholder="Buscar planta..."
+          valor={form.planta || null}
+          valorLabel={inicial?.planta_nome}
+          onChange={(v) => set("planta", v ?? 0)}
+          buscar={(query) =>
+            listPlantas({ search: query, page_size: 20 }).then((r) =>
+              r.resultados.map((p) => ({ value: p.id, label: p.nome_popular }))
+            )
+          }
         />
         <SelectField
           label="Disponibilidade"

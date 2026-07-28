@@ -1,0 +1,4 @@
+# requirements/production.txt
+
+-r base.txt
+whitenoise==6.7.0

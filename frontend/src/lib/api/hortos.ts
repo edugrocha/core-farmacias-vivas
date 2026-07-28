@@ -1,4 +1,4 @@
-import { apiFetch, buildQuery } from "./client";
+import { apiFetch, buildQuery, corpoRequisicao } from "./client";
 import type { Horto, HortosProximosResponse, Paginacao } from "./types";
 
 export interface FiltrosHortos {
@@ -19,17 +19,17 @@ export function getHorto(id: number | string) {
   return apiFetch<Horto>(`/hortos/${id}/`);
 }
 
-export function createHorto(dados: Partial<Horto>) {
+export function createHorto(dados: Partial<Horto> | FormData) {
   return apiFetch<Horto>(`/hortos/`, {
     method: "POST",
-    body: JSON.stringify(dados),
+    body: corpoRequisicao(dados),
   });
 }
 
-export function updateHorto(id: number | string, dados: Partial<Horto>) {
+export function updateHorto(id: number | string, dados: Partial<Horto> | FormData) {
   return apiFetch<Horto>(`/hortos/${id}/`, {
     method: "PATCH",
-    body: JSON.stringify(dados),
+    body: corpoRequisicao(dados),
   });
 }
 

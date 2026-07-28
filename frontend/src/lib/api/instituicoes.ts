@@ -1,7 +1,7 @@
 import { apiFetch, buildQuery } from "./client";
 import type { Instituicao, Paginacao } from "./types";
 
-export function listInstituicoes(params: { search?: string; page?: number } = {}) {
+export function listInstituicoes(params: { search?: string; page?: number; page_size?: number } = {}) {
   return apiFetch<Paginacao<Instituicao>>(`/instituicoes/${buildQuery(params)}`);
 }
 

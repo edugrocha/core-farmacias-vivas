@@ -5,6 +5,7 @@ import { getMeuPerfil, updateMeuPerfil } from "@/lib/api/perfis";
 import type { Usuario } from "@/lib/api/types";
 import { Card } from "@/components/ui/Card";
 import { FormField } from "@/components/ui/FormField";
+import { ImageField } from "@/components/ui/ImageField";
 import { Button } from "@/components/ui/Button";
 import { LoadingBlock, ErrorBlock } from "@/components/ui/Spinner";
 import { formatarData, mensagemErro } from "@/lib/format";
@@ -15,6 +16,7 @@ export default function MeuPerfilPage() {
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState(false);
+  const [foto, setFoto] = useState<File | null>(null);
 
   useEffect(() => {
     getMeuPerfil()
@@ -34,14 +36,26 @@ export default function MeuPerfilPage() {
     setErro(null);
     setSucesso(false);
     try {
-      const atualizado = await updateMeuPerfil({
+      const dados = {
         email: perfil.email,
         first_name: perfil.first_name,
         last_name: perfil.last_name,
         telefone: perfil.telefone,
         instituicao: perfil.instituicao,
-      });
+      };
+      let atualizado: Usuario;
+      if (foto) {
+        const dadosComArquivo = new FormData();
+        for (const [chave, valor] of Object.entries(dados)) {
+          dadosComArquivo.append(chave, valor);
+        }
+        dadosComArquivo.append("foto_perfil", foto);
+        atualizado = await updateMeuPerfil(dadosComArquivo);
+      } else {
+        atualizado = await updateMeuPerfil(dados);
+      }
       setPerfil(atualizado);
+      setFoto(null);
       setSucesso(true);
     } catch (e) {
       setErro(mensagemErro(e));
@@ -62,6 +76,7 @@ export default function MeuPerfilPage() {
         </p>
       </div>
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        <ImageField label="Foto de perfil" fotoAtual={perfil.foto_perfil} onChange={setFoto} />
         <FormField
           label="E-mail"
           type="email"

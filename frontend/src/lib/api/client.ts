@@ -76,6 +76,12 @@ export async function apiFetch<T>(
   return data as T;
 }
 
+/** Permite que as funções de create/update aceitem tanto um objeto (JSON)
+ * quanto um FormData (quando há upload de arquivo) sem duplicar lógica. */
+export function corpoRequisicao(dados: unknown): BodyInit {
+  return dados instanceof FormData ? dados : JSON.stringify(dados);
+}
+
 export function buildQuery<T extends object>(params: T): string {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
