@@ -41,7 +41,7 @@ export default function PlantaDetalhePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Link href="/" className="text-sm text-primary-700 hover:underline">
+      <Link href="/plantas" className="text-sm text-primary-700 hover:underline">
         ← Voltar ao catálogo
       </Link>
 

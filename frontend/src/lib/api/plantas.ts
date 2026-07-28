@@ -9,6 +9,7 @@ export interface FiltrosPlantas {
   uso?: string;
   regiao?: string;
   page?: number;
+  page_size?: number;
   search?: string;
   ordering?: string;
 }

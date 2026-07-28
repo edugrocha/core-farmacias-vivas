@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { Button, LinkButton } from "@/components/ui/Button";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export function Header() {
   const { usuario, isEspecialista, logout, carregando } = useAuth();
@@ -17,6 +18,9 @@ export function Header() {
 
         <nav className="flex items-center gap-4 text-sm text-stone-600 dark:text-stone-300">
           <Link href="/" className="hover:text-primary-700">
+            Início
+          </Link>
+          <Link href="/plantas" className="hover:text-primary-700">
             Catálogo
           </Link>
           <Link href="/hortos" className="hover:text-primary-700">
@@ -30,6 +34,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           {carregando ? null : usuario ? (
             <>
               <Link href="/meu-perfil" className="text-sm text-stone-600 hover:text-primary-700 dark:text-stone-300">

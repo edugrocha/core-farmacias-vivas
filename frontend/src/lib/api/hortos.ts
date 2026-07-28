@@ -8,6 +8,7 @@ export interface FiltrosHortos {
   instituicao?: number;
   search?: string;
   page?: number;
+  page_size?: number;
 }
 
 export function listHortos(filtros: FiltrosHortos = {}) {
