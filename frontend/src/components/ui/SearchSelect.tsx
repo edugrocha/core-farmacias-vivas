@@ -39,6 +39,11 @@ export function SearchSelect({
   const [carregando, setCarregando] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const valorRef = useRef(valor);
+
+  useEffect(() => {
+    valorRef.current = valor;
+  }, [valor]);
 
   useEffect(() => {
     function aoClicarFora(e: MouseEvent) {
@@ -73,6 +78,26 @@ export function SearchSelect({
     setAberto(false);
   }
 
+  function aoTeclar(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      // Impede que Enter dispare o submit do formulário sem uma seleção
+      // válida: se há resultados, seleciona o primeiro; senão, ignora.
+      e.preventDefault();
+      if (opcoes.length > 0) selecionar(opcoes[0]);
+    } else if (e.key === "Escape") {
+      setAberto(false);
+    }
+  }
+
+  function aoPerderFoco() {
+    // Delay para permitir que o clique numa opção (que dispara blur antes do
+    // click) ainda seja processado por selecionar() antes de validarmos.
+    setTimeout(() => {
+      setAberto(false);
+      if (valorRef.current === null) setTexto("");
+    }, 150);
+  }
+
   return (
     <div ref={containerRef} className="relative flex flex-col gap-1 text-sm">
       <span className="font-medium text-stone-700 dark:text-stone-300">
@@ -88,10 +113,12 @@ export function SearchSelect({
           if (opcoes.length === 0) buscarComDebounce(texto);
         }}
         onChange={(e) => aoDigitar(e.target.value)}
-        className="rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-stone-900 dark:border-stone-700"
+        onKeyDown={aoTeclar}
+        onBlur={aoPerderFoco}
+        className="rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-stone-900 dark:border-stone-700"
       />
       {aberto && (
-        <div className="absolute top-full z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-stone-200 bg-white shadow-lg dark:border-stone-700 dark:bg-stone-900">
+        <div className="absolute top-full z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-stone-200 bg-white shadow-lg dark:border-stone-700 dark:bg-stone-900">
           {carregando && <p className="p-3 text-sm text-stone-500">Buscando...</p>}
           {!carregando && opcoes.length === 0 && (
             <p className="p-3 text-sm text-stone-500">Nenhum resultado.</p>

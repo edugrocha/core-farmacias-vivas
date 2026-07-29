@@ -57,7 +57,7 @@ export default function CatalogoPage() {
             setPagina(1);
             setBusca(e.target.value);
           }}
-          className="w-full max-w-md rounded-lg border border-stone-300 px-4 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-stone-700 dark:bg-stone-900"
+          className="w-full max-w-md rounded-full border border-stone-200 bg-white px-4 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-stone-700 dark:bg-stone-900"
         />
         <Pills
           options={toxicidadeOptions}

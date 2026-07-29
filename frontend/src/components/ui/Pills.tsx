@@ -21,7 +21,7 @@ export function Pills({ options, ativo, onChange }: PillsProps) {
             onClick={() => onChange(opt.value)}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer ${
               selecionado
-                ? "bg-primary-500 text-primary-ink"
+                ? "bg-ink text-primary-ink"
                 : "bg-stone-100 text-stone-600 hover:bg-primary-50 dark:bg-stone-800 dark:text-stone-300"
             }`}
           >

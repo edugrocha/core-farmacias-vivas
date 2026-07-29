@@ -4,6 +4,19 @@ import { tokenStore } from "@/lib/auth/tokenStore";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api/v1";
 
+/** Extrai uma mensagem legível do formato padrão de erro de validação do DRF:
+ * `{"campo": ["mensagem"], "outro_campo": ["mensagem"]}`. */
+function mensagemDeErroDeCampos(detail: unknown): string | null {
+  if (typeof detail !== "object" || detail === null || Array.isArray(detail)) return null;
+  const partes = Object.entries(detail as Record<string, unknown>)
+    .filter(([chave]) => chave !== "detail")
+    .map(([campo, mensagens]) => {
+      const texto = Array.isArray(mensagens) ? mensagens.join(" ") : String(mensagens);
+      return `${campo}: ${texto}`;
+    });
+  return partes.length > 0 ? partes.join(" | ") : null;
+}
+
 export class ApiError extends Error {
   status: number;
   detail: unknown;
@@ -12,7 +25,9 @@ export class ApiError extends Error {
     super(
       typeof detail === "string"
         ? detail
-        : (detail as { detail?: string })?.detail ?? `Erro HTTP ${status}`
+        : ((detail as { detail?: string })?.detail ??
+          mensagemDeErroDeCampos(detail) ??
+          `Erro HTTP ${status}`)
     );
     this.status = status;
     this.detail = detail;

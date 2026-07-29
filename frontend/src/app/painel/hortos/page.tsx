@@ -57,7 +57,7 @@ export default function HortosPainelPage() {
         <LoadingBlock />
       ) : (
         dados && (
-          <div className="rounded-xl border border-stone-200 dark:border-stone-800">
+          <div className="rounded-2xl border border-stone-200/70 bg-white overflow-hidden dark:border-stone-800 dark:bg-stone-900/40">
             <DataTable
               items={dados.resultados}
               keyField={(h) => h.id}

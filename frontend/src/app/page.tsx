@@ -52,7 +52,7 @@ export default function HomePage() {
       </section>
 
       {/* Stats */}
-      <section className="rounded-2xl bg-cream p-8 dark:bg-stone-900/40">
+      <section>
         <StatsBar />
       </section>
 

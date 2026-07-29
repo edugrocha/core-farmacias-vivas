@@ -7,14 +7,15 @@ import { listInstituicoes } from "@/lib/api/instituicoes";
 
 interface Stat {
   label: string;
+  descricao: string;
   valor: number | null;
 }
 
 export function StatsBar() {
   const [stats, setStats] = useState<Stat[]>([
-    { label: "Plantas catalogadas", valor: null },
-    { label: "Hortos ativos", valor: null },
-    { label: "Instituições parceiras", valor: null },
+    { label: "Plantas catalogadas", descricao: "Acervo publicado e curado", valor: null },
+    { label: "Hortos ativos", descricao: "Monitorados pelo projeto", valor: null },
+    { label: "Instituições parceiras", descricao: "Mantendo hortos medicinais", valor: null },
   ]);
 
   useEffect(() => {
@@ -23,17 +24,11 @@ export function StatsBar() {
       listHortos({ status: "ATIVO", page_size: 1 }),
       listInstituicoes({ page: 1 }),
     ]).then(([plantas, hortos, instituicoes]) => {
-      setStats([
+      setStats((atual) => [
+        { ...atual[0], valor: plantas.status === "fulfilled" ? plantas.value.paginacao.total : 0 },
+        { ...atual[1], valor: hortos.status === "fulfilled" ? hortos.value.paginacao.total : 0 },
         {
-          label: "Plantas catalogadas",
-          valor: plantas.status === "fulfilled" ? plantas.value.paginacao.total : 0,
-        },
-        {
-          label: "Hortos ativos",
-          valor: hortos.status === "fulfilled" ? hortos.value.paginacao.total : 0,
-        },
-        {
-          label: "Instituições parceiras",
+          ...atual[2],
           valor: instituicoes.status === "fulfilled" ? instituicoes.value.paginacao.total : 0,
         },
       ]);
@@ -41,11 +36,23 @@ export function StatsBar() {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-      {stats.map((stat) => (
-        <div key={stat.label} className="text-center">
-          <p className="text-3xl font-bold text-primary-700">{stat.valor ?? "—"}</p>
-          <p className="text-sm text-stone-500">{stat.label}</p>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      {stats.map((stat, i) => (
+        <div
+          key={stat.label}
+          className={`rounded-2xl p-5 ${
+            i === 0
+              ? "bg-primary-500 text-primary-ink"
+              : "border border-stone-200/70 bg-white dark:border-stone-800 dark:bg-stone-900/40"
+          }`}
+        >
+          <p className={`text-3xl font-bold ${i === 0 ? "" : "text-stone-900 dark:text-stone-100"}`}>
+            {stat.valor ?? "—"}
+          </p>
+          <p className={`mt-1 text-sm font-medium ${i === 0 ? "" : "text-stone-700 dark:text-stone-300"}`}>
+            {stat.label}
+          </p>
+          <p className={`text-xs ${i === 0 ? "opacity-80" : "text-stone-500"}`}>{stat.descricao}</p>
         </div>
       ))}
     </div>

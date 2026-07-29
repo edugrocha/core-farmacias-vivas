@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Merriweather } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
@@ -42,10 +43,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       suppressHydrationWarning
       className={`${inter.variable} ${merriweather.variable} h-full antialiased`}
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: scriptAntiFlash }} />
-      </head>
       <body className="min-h-full flex flex-col">
+        <Script
+          id="anti-flash-tema"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: scriptAntiFlash }}
+        />
         <ThemeProvider>
           <AuthProvider>
             <Header />

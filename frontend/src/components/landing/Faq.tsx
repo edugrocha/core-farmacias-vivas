@@ -27,7 +27,7 @@ export function Faq() {
       {perguntas.map((item) => (
         <details
           key={item.pergunta}
-          className="group rounded-xl border border-stone-200 p-4 dark:border-stone-800"
+          className="group rounded-2xl border border-stone-200/70 bg-white p-4 dark:border-stone-800 dark:bg-stone-900/40"
         >
           <summary className="cursor-pointer list-none font-medium text-stone-900 marker:content-none dark:text-stone-100">
             <span className="mr-2 inline-block text-primary-700 transition-transform group-open:rotate-90">

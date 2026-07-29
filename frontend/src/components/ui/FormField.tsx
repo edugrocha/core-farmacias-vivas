@@ -21,7 +21,7 @@ function FieldWrapper({ label, error, required, children }: WrapperProps) {
 }
 
 const inputClasses =
-  "rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-stone-900 dark:border-stone-700";
+  "rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-stone-900 dark:border-stone-700";
 
 interface FormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
