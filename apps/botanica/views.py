@@ -1,6 +1,7 @@
 # apps/botanica/views.py
 
-from rest_framework import generics, filters
+from rest_framework import generics, filters, status
+from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
@@ -110,3 +111,16 @@ class FamiliaBotanicaListView(generics.ListCreateAPIView):
     permission_classes = [IsEspecialistaOuLeituraPublica]
     filter_backends = [filters.SearchFilter]
     search_fields = ['nome']
+
+
+@extend_schema(tags=['botanica'])
+class FamiliaBotanicaDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET       — Detalhe de uma família botânica.
+    PUT/PATCH — Atualiza dados da família (requer especialista).
+    DELETE    — Remove a família (requer especialista; falha se houver plantas vinculadas,
+                pois Planta.familia usa on_delete=PROTECT).
+    """
+    queryset = FamiliaBotanica.objects.all()
+    serializer_class = FamiliaBotanicaSerializer
+    permission_classes = [IsEspecialistaOuLeituraPublica]

@@ -1,0 +1,47 @@
+import { ButtonHTMLAttributes } from "react";
+import Link from "next/link";
+
+type Variant = "primary" | "secondary" | "accent" | "danger" | "ghost";
+
+const variantClasses: Record<Variant, string> = {
+  primary: "bg-ink text-primary-ink hover:opacity-90 disabled:opacity-50",
+  secondary:
+    "bg-white text-stone-900 border border-stone-200 hover:bg-stone-50 disabled:opacity-50 dark:bg-stone-900 dark:text-stone-100 dark:border-stone-700 dark:hover:bg-stone-800",
+  accent: "bg-primary-500 text-primary-ink hover:bg-primary-600 disabled:opacity-50",
+  danger: "bg-danger text-white hover:opacity-90 disabled:opacity-50",
+  ghost: "bg-transparent text-primary-700 hover:bg-primary-50",
+};
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: Variant;
+}
+
+export function Button({ variant = "primary", className = "", ...props }: ButtonProps) {
+  return (
+    <button
+      className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors cursor-pointer ${variantClasses[variant]} ${className}`}
+      {...props}
+    />
+  );
+}
+
+export function LinkButton({
+  href,
+  variant = "primary",
+  className = "",
+  children,
+}: {
+  href: string;
+  variant?: Variant;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${variantClasses[variant]} ${className}`}
+    >
+      {children}
+    </Link>
+  );
+}

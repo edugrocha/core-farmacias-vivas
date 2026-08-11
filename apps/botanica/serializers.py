@@ -5,7 +5,7 @@ from .models import Planta, FamiliaBotanica
 class FamiliaBotanicaSerializer(serializers.ModelSerializer):
     class Meta:
         model = FamiliaBotanica
-        fields = ['id', 'nome']
+        fields = ['id', 'nome', 'descricao']
 
 
 class PlantaPublicaSerializer(serializers.ModelSerializer):

@@ -1,0 +1,30 @@
+# Ambiente virtual / dependências locais
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Django (gerados em runtime/build, não devem vir do host)
+staticfiles/
+media/
+db.sqlite3
+*.log
+
+# Variáveis de ambiente e segredos locais
+.env
+.env.*
+!.env.example
+
+# Controle de versão e editor
+.git/
+.gitignore
+.vscode/
+.idea/
+.DS_Store
+
+# Frontend não faz parte da imagem do backend
+frontend/

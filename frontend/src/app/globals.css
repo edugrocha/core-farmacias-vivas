@@ -1,0 +1,79 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+/* Faz o "dark:" do Tailwind responder à classe .dark no <html>
+   (aplicada pelo toggle de tema), em vez de só ao prefers-color-scheme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #f2f5ea;
+  --foreground: #1c1f1c;
+
+  /* Paleta "agritech dashboard" — inspirada em referência de dashboard SaaS
+     (verde saturado + preto quase puro + creme/amarelo de destaque). */
+  --color-cream: #eef3e3;
+  --color-highlight-50: #fdf6d2;
+  --color-highlight-500: #f5df6e;
+  --color-ink: #17181a;
+  --color-primary-50: #eaf5e2;
+  --color-primary-100: #d2ecc0;
+  --color-primary-500: #5ea83d;
+  --color-primary-600: #4c8a30;
+  --color-primary-700: #3b6b25;
+  --color-primary-ink: #ffffff;
+  --color-accent-500: #3b6b25;
+
+  --color-success: #3e8e4f;
+  --color-warning: #d9a441;
+  --color-danger: #c0392b;
+  --color-info: #3b82c4;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-merriweather);
+
+  --color-cream: var(--color-cream);
+  --color-highlight-50: var(--color-highlight-50);
+  --color-highlight-500: var(--color-highlight-500);
+  --color-ink: var(--color-ink);
+  --color-primary-50: var(--color-primary-50);
+  --color-primary-100: var(--color-primary-100);
+  --color-primary-500: var(--color-primary-500);
+  --color-primary-600: var(--color-primary-600);
+  --color-primary-700: var(--color-primary-700);
+  --color-primary-ink: var(--color-primary-ink);
+  --color-accent-500: var(--color-accent-500);
+
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+  --color-info: var(--color-info);
+}
+
+:root.dark {
+  --background: #10130f;
+  --foreground: #ecece9;
+  --color-cream: #191d15;
+  --color-highlight-50: #2b2712;
+  --color-highlight-500: #a8912f;
+  --color-ink: #f2f2f0;
+  --color-primary-ink: #10130f;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+}
+
+.font-cientifico {
+  font-family: var(--font-merriweather), Georgia, serif;
+  font-style: italic;
+}
+
+.leaflet-container {
+  border-radius: 0.75rem;
+}

@@ -96,3 +96,87 @@ class GeolocationTestCase(TestCase):
     def test_sem_lat_lon_retorna_400(self):
         resp = self.client.get('/api/v1/hortos/proximos/')
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class HortoCRUDPermissionTestCase(TestCase):
+    """CRUD de /hortos/ — escrita restrita a especialista; edição restrita ao
+    responsável cadastrado no horto ou a um admin."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.instituicao = Instituicao.objects.create(nome='IFPE', tipo='Instituto Federal')
+        self.responsavel = Usuario.objects.create_user(
+            username='resp', password='senha1234', tipo_perfil='ESPECIALISTA',
+        )
+        self.outro_especialista = Usuario.objects.create_user(
+            username='outro', password='senha1234', tipo_perfil='ESPECIALISTA',
+        )
+        self.admin = Usuario.objects.create_user(
+            username='admin', password='senha1234', tipo_perfil='ADMIN', is_staff=True,
+        )
+        self.horto = Horto.objects.create(
+            nome='Horto do Responsável', instituicao=self.instituicao,
+            responsavel=self.responsavel, municipio='Recife', uf='PE', status='ATIVO',
+            localizacao=Point(-34.88, -8.05, srid=4326),
+        )
+
+    def test_comunidade_nao_pode_criar_horto(self):
+        comunidade = Usuario.objects.create_user(
+            username='com', password='senha1234', tipo_perfil='COMUNIDADE',
+        )
+        self.client.force_authenticate(user=comunidade)
+        resp = self.client.post('/api/v1/hortos/', {
+            'nome': 'Novo Horto', 'instituicao': self.instituicao.pk,
+            'municipio': 'Recife', 'uf': 'PE',
+            'localizacao': {'type': 'Point', 'coordinates': [-34.88, -8.05]},
+        }, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_especialista_nao_responsavel_nao_pode_editar(self):
+        self.client.force_authenticate(user=self.outro_especialista)
+        resp = self.client.patch(f'/api/v1/hortos/{self.horto.pk}/', {'nome': 'Renomeado'})
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_responsavel_pode_editar_proprio_horto(self):
+        self.client.force_authenticate(user=self.responsavel)
+        resp = self.client.patch(f'/api/v1/hortos/{self.horto.pk}/', {'nome': 'Renomeado'})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.horto.refresh_from_db()
+        self.assertEqual(self.horto.nome, 'Renomeado')
+
+    def test_admin_pode_editar_qualquer_horto(self):
+        self.client.force_authenticate(user=self.admin)
+        resp = self.client.patch(f'/api/v1/hortos/{self.horto.pk}/', {'nome': 'Editado pelo admin'})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_leitura_e_publica(self):
+        resp = self.client.get(f'/api/v1/hortos/{self.horto.pk}/')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+
+class InstituicaoCRUDTestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.especialista = Usuario.objects.create_user(
+            username='especialista', password='senha1234', tipo_perfil='ESPECIALISTA',
+        )
+        self.instituicao = Instituicao.objects.create(nome='IFPE', tipo='Instituto Federal')
+
+    def test_leitura_e_publica(self):
+        resp = self.client.get('/api/v1/instituicoes/')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_exclusao_falha_se_houver_horto_vinculado(self):
+        Horto.objects.create(
+            nome='Horto Vinculado', instituicao=self.instituicao,
+            municipio='Recife', uf='PE', status='ATIVO',
+            localizacao=Point(-34.88, -8.05, srid=4326),
+        )
+        self.client.force_authenticate(user=self.especialista)
+        # PROTECT no FK Horto.instituicao não é tratado na view: a exclusão
+        # propaga um ProtectedError (500). O client precisa não relançar essa
+        # exceção como erro de teste para podermos inspecionar a resposta.
+        self.client.raise_request_exception = False
+        resp = self.client.delete(f'/api/v1/instituicoes/{self.instituicao.pk}/')
+        self.assertNotEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertTrue(Instituicao.objects.filter(pk=self.instituicao.pk).exists())

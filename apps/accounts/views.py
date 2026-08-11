@@ -3,7 +3,7 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from drf_spectacular.utils import extend_schema, OpenApiExample
@@ -14,6 +14,8 @@ from .serializers import (
     RegistroUsuarioSerializer,
     PerfilPublicoSerializer,
     PerfilDetalhadoSerializer,
+    PerfilAdminSerializer,
+    PerfilAdminCreateSerializer,
     CustomTokenObtainPairSerializer,
 )
 
@@ -74,3 +76,40 @@ class MeuPerfilView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+@extend_schema(tags=['accounts'])
+class PerfilListView(generics.ListCreateAPIView):
+    """
+    GET  — Lista todos os perfis cadastrados, com busca e filtros
+           por tipo_perfil e is_active (apenas administradores).
+    POST — Cria um novo perfil com tipo_perfil já definido
+           (apenas administradores).
+    """
+    queryset = Usuario.objects.all().order_by('-date_joined')
+    permission_classes = [IsAdminUser]
+    filterset_fields = ['tipo_perfil', 'is_active']
+    search_fields = ['username', 'email', 'first_name', 'last_name']
+    ordering_fields = ['date_joined', 'username']
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return PerfilAdminCreateSerializer
+        return PerfilAdminSerializer
+
+
+@extend_schema(tags=['accounts'])
+class PerfilDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET       — Detalhe completo de um perfil (apenas administradores).
+    PUT/PATCH — Atualiza dados do perfil, incluindo tipo_perfil
+                (apenas administradores).
+    DELETE    — Desativa o perfil (soft delete; não remove do banco).
+    """
+    queryset = Usuario.objects.all()
+    serializer_class = PerfilAdminSerializer
+    permission_classes = [IsAdminUser]
+
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])

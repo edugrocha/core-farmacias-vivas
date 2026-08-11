@@ -20,6 +20,7 @@ class Instituicao(models.Model):
     class Meta:
         verbose_name = "Instituição"
         verbose_name_plural = "Instituições"
+        ordering = ['nome']
 
 
 class Horto(models.Model):

@@ -1,16 +1,74 @@
-# apps/hortos/views.py — HortosProximosView (versão final)
+# apps/hortos/views.py
 
+from rest_framework import generics, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import status
+from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
-from .models import Horto
-from .serializers import HortoGeoSerializer
+from core.permissions import IsEspecialistaOuLeituraPublica, IsResponsavelHortoOuAdmin
+from .models import Horto, Instituicao
+from .serializers import HortoGeoSerializer, HortoSerializer, InstituicaoSerializer
+
+
+@extend_schema(tags=['hortos'])
+class HortoListCreateView(generics.ListCreateAPIView):
+    """
+    GET  — Lista os hortos cadastrados. Suporta busca e filtro por status/UF/município.
+    POST — Cria um novo horto (requer perfil especialista).
+    """
+    serializer_class = HortoSerializer
+    permission_classes = [IsEspecialistaOuLeituraPublica]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['status', 'uf', 'municipio', 'instituicao']
+    search_fields = ['nome', 'municipio', 'instituicao__nome']
+    ordering_fields = ['nome', 'created_at']
+    ordering = ['nome']
+
+    def get_queryset(self):
+        return Horto.objects.select_related('instituicao', 'responsavel').all()
+
+
+@extend_schema(tags=['hortos'])
+class HortoDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET       — Detalhe de um horto.
+    PUT/PATCH — Atualiza o horto (apenas o responsável cadastrado ou um administrador).
+    DELETE    — Remove o horto (apenas o responsável cadastrado ou um administrador).
+    """
+    serializer_class = HortoSerializer
+    permission_classes = [IsEspecialistaOuLeituraPublica, IsResponsavelHortoOuAdmin]
+    queryset = Horto.objects.select_related('instituicao', 'responsavel').all()
+
+
+@extend_schema(tags=['hortos'])
+class InstituicaoListCreateView(generics.ListCreateAPIView):
+    """
+    GET  — Lista as instituições parceiras.
+    POST — Cadastra uma nova instituição (requer perfil especialista).
+    """
+    queryset = Instituicao.objects.all()
+    serializer_class = InstituicaoSerializer
+    permission_classes = [IsEspecialistaOuLeituraPublica]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['nome', 'tipo']
+
+
+@extend_schema(tags=['hortos'])
+class InstituicaoDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET       — Detalhe de uma instituição.
+    PUT/PATCH — Atualiza dados da instituição (requer especialista).
+    DELETE    — Remove a instituição (requer especialista; falha se houver hortos vinculados).
+    """
+    queryset = Instituicao.objects.all()
+    serializer_class = InstituicaoSerializer
+    permission_classes = [IsEspecialistaOuLeituraPublica]
 
 
 @extend_schema(
@@ -95,5 +153,8 @@ class HortosProximosView(APIView):
             'total':  queryset.count(),
             'origem': {'lat': lat, 'lon': lon},
             'nota':   'Hortos ordenados do mais próximo ao mais distante. Sem limite de raio.',
-            'features': serializer.data,
+            # GeoFeatureModelSerializer com many=True já serializa para um
+            # FeatureCollection completo ({'type', 'features': [...]});
+            # extraímos apenas a lista para não aninhar duas collections.
+            'features': serializer.data['features'],
         })

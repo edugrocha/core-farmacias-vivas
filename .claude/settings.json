@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:dribbble.com)",
+      "Bash(curl -s -o /dev/null -w \"next painel: %{http_code}\\\\n\" http://localhost:3000/painel)",
+      "Bash(\"/c/Program Files/Docker/Docker/Docker Desktop.exe\" > /tmp/docker_desktop.log 2>&1 & *)",
+      "Bash(curl -s http://127.0.0.1:8000/api/v1/plantas/1/)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d['foto_principal']\\)\")",
+      "Bash(curl -s -o /dev/null -w \"next: %{http_code}\\\\n\" http://localhost:3000/painel/plantas/novo)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
+    ]
+  }
+}

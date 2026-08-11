@@ -23,6 +23,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    'corsheaders',
     'rest_framework',
     'rest_framework_gis',
     'rest_framework_simplejwt',
@@ -42,6 +43,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -62,6 +64,23 @@ DATABASES = {
         'PORT': config('DB_PORT', default='5432'),
     }
 }
+
+# ───────────────────────────────────────────
+# GDAL/GEOS — No Windows, o pacote `gdal` (wheel do geospatial-wheels)
+# já embute as DLLs; localizamos o diretório instalado dinamicamente
+# em vez de fixar caminho de máquina. Em Linux/produção, as libs são
+# resolvidas pelo sistema e essa configuração é ignorada.
+# ───────────────────────────────────────────
+import os as _os
+
+if _os.name == 'nt':
+    try:
+        from osgeo import gdal as _gdal_probe
+        _osgeo_dir = Path(_gdal_probe.__file__).resolve().parent
+        GDAL_LIBRARY_PATH = config('GDAL_LIBRARY_PATH', default=str(_osgeo_dir / 'gdal.dll'))
+        GEOS_LIBRARY_PATH = config('GEOS_LIBRARY_PATH', default=str(_osgeo_dir / 'geos_c.dll'))
+    except ImportError:
+        pass
 
 # ───────────────────────────────────────────
 # Django REST Framework
@@ -126,12 +145,42 @@ SPECTACULAR_SETTINGS = {
 }
 
 MEDIA_URL  = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# Configurável via env var para apontar pro disco persistente em produção
+# (ex: Render Persistent Disk montado em /data). Sem a variável, cai no
+# comportamento local de sempre.
+MEDIA_ROOT = Path(config('MEDIA_ROOT', default=str(BASE_DIR / 'media')))
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# ───────────────────────────────────────────
+# Templates — necessário para django.contrib.admin
+# ───────────────────────────────────────────
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'templates'],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LANGUAGE_CODE = 'pt-br'
 TIME_ZONE = 'America/Recife'
 USE_I18N = True
 USE_TZ = True
+
+# ───────────────────────────────────────────
+# CORS — necessário para o frontend (Next.js, porta separada) consumir a API
+# ───────────────────────────────────────────
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ALLOWED_ORIGINS', default='http://localhost:3000'
+).split(',')
+CORS_ALLOW_CREDENTIALS = config('CORS_ALLOW_CREDENTIALS', default=True, cast=bool)

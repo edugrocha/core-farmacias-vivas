@@ -55,3 +55,59 @@ class AuthTestCase(TestCase):
     def test_acesso_ao_perfil_sem_autenticacao_retorna_401(self):
         resp = self.client.get('/api/v1/meu-perfil/')
         self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class PerfisAdminAPITestCase(TestCase):
+    """CRUD administrativo de perfis (/api/v1/perfis/) — restrito a staff."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.comunidade = Usuario.objects.create_user(
+            username='ana', password='senha1234', tipo_perfil='COMUNIDADE',
+        )
+        self.admin = Usuario.objects.create_user(
+            username='admin', password='senha1234', tipo_perfil='ADMIN', is_staff=True,
+        )
+
+    def test_usuario_comum_nao_acessa_lista_de_perfis(self):
+        self.client.force_authenticate(user=self.comunidade)
+        resp = self.client.get('/api/v1/perfis/')
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_anonimo_nao_acessa_lista_de_perfis(self):
+        resp = self.client.get('/api/v1/perfis/')
+        self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_admin_lista_perfis(self):
+        self.client.force_authenticate(user=self.admin)
+        resp = self.client.get('/api/v1/perfis/')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['paginacao']['total'], 2)
+
+    def test_admin_cria_perfil_com_tipo_definido(self):
+        self.client.force_authenticate(user=self.admin)
+        resp = self.client.post('/api/v1/perfis/', {
+            'username': 'carla', 'email': 'carla@test.com', 'tipo_perfil': 'ESPECIALISTA',
+            'password': 'senha5678',
+        })
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        novo = Usuario.objects.get(username='carla')
+        self.assertEqual(novo.tipo_perfil, 'ESPECIALISTA')
+
+    def test_admin_atualiza_tipo_perfil(self):
+        self.client.force_authenticate(user=self.admin)
+        resp = self.client.patch(f'/api/v1/perfis/{self.comunidade.pk}/', {
+            'tipo_perfil': 'ESPECIALISTA',
+        })
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.comunidade.refresh_from_db()
+        self.assertEqual(self.comunidade.tipo_perfil, 'ESPECIALISTA')
+
+    def test_admin_desativa_perfil_com_delete_logico(self):
+        self.client.force_authenticate(user=self.admin)
+        resp = self.client.delete(f'/api/v1/perfis/{self.comunidade.pk}/')
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+        self.comunidade.refresh_from_db()
+        self.assertFalse(self.comunidade.is_active)
+        # Deleção lógica: o registro continua existindo no banco.
+        self.assertTrue(Usuario.objects.filter(pk=self.comunidade.pk).exists())

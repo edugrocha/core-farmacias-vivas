@@ -1,0 +1,70 @@
+# Blueprint do Render — provisiona o backend (Docker) + Postgres/PostGIS.
+#
+# Antes do primeiro deploy:
+#   1. Criar o Blueprint a partir deste arquivo.
+#   2. No banco criado, abrir o "PSQL Command" (dashboard do Render) e rodar:
+#        CREATE EXTENSION postgis;
+#      (obrigatório antes do primeiro `migrate` — o app `hortos` cria uma
+#      coluna geoespacial que depende do PostGIS já estar habilitado.)
+#   3. Preencher CORS_ALLOWED_ORIGINS (marcado como sync: false abaixo) com
+#      a URL do frontend em produção (ex: https://farmacias-vivas.vercel.app).
+#
+# Ajuste `plan`/`region` de cada recurso conforme necessidade — os nomes de
+# tier mudam com frequência, então não fixamos um valor aqui.
+
+databases:
+  - name: farmacias-vivas-db
+    databaseName: farmacias_vivas
+    plan: basic-1gb
+    postgresMajorVersion: "16"
+    region: oregon
+
+services:
+  - type: web
+    name: farmacias-vivas-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    region: oregon
+    healthCheckPath: /api/schema/
+    # collectstatic já roda dentro do Dockerfile (o filesystem do
+    # preDeployCommand é descartado e não chega ao serviço em execução).
+    preDeployCommand: python manage.py migrate --noinput
+    disk:
+      name: media
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: DJANGO_SETTINGS_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: farmacias-vivas-api.onrender.com
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: CORS_ALLOW_CREDENTIALS
+        value: "True"
+      - key: MEDIA_ROOT
+        value: /data
+      - key: DB_NAME
+        fromDatabase:
+          name: farmacias-vivas-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: farmacias-vivas-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: farmacias-vivas-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: farmacias-vivas-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: farmacias-vivas-db
+          property: port

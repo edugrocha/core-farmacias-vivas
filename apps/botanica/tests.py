@@ -109,3 +109,41 @@ class PlantaAPITestCase(TestCase):
         resp = self.client.get('/api/v1/plantas/?toxicidade=SEGURA')
         nomes = [r['nome_popular'] for r in resp.data['resultados']]
         self.assertIn('Erva-cidreira', nomes)
+
+
+class FamiliaBotanicaAPITestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.especialista = Usuario.objects.create_user(
+            username='especialista', password='senha1234', tipo_perfil='ESPECIALISTA',
+        )
+        self.comunidade = Usuario.objects.create_user(
+            username='comunidade', password='senha1234', tipo_perfil='COMUNIDADE',
+        )
+        self.familia = FamiliaBotanica.objects.create(nome='Asteraceae')
+
+    def test_leitura_e_publica(self):
+        resp = self.client.get('/api/v1/familias/')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_comunidade_nao_pode_criar_familia(self):
+        self.client.force_authenticate(user=self.comunidade)
+        resp = self.client.post('/api/v1/familias/', {'nome': 'Rosaceae'})
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_especialista_pode_criar_familia(self):
+        self.client.force_authenticate(user=self.especialista)
+        resp = self.client.post('/api/v1/familias/', {'nome': 'Rosaceae'})
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+    def test_exclusao_falha_se_houver_planta_vinculada(self):
+        Planta.objects.create(
+            nome_popular='Camomila', nome_cientifico='Matricaria chamomilla',
+            familia=self.familia, descricao='Calmante.', parte_utilizada='Flores',
+            usos_terapeuticos='Insônia.', nivel_toxicidade='SEGURA',
+        )
+        self.client.force_authenticate(user=self.especialista)
+        self.client.raise_request_exception = False
+        resp = self.client.delete(f'/api/v1/familias/{self.familia.pk}/')
+        self.assertNotEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertTrue(FamiliaBotanica.objects.filter(pk=self.familia.pk).exists())

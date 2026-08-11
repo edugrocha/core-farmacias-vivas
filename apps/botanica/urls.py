@@ -6,5 +6,6 @@ urlpatterns = [
     path('plantas/',               views.PlantaListCreateView.as_view(), name='plantas-list'),
     path('plantas/<int:pk>/',      views.PlantaDetailView.as_view(),     name='plantas-detail'),
     path('plantas/<int:pk>/publicar/', views.PublicarPlantaView.as_view(), name='plantas-publicar'),
-    path('familias/',              views.FamiliaBotanicaListView.as_view(), name='familias-list'),
+    path('familias/',              views.FamiliaBotanicaListView.as_view(),   name='familias-list'),
+    path('familias/<int:pk>/',     views.FamiliaBotanicaDetailView.as_view(), name='familias-detail'),
 ]
