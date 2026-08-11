@@ -145,7 +145,10 @@ SPECTACULAR_SETTINGS = {
 }
 
 MEDIA_URL  = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# Configurável via env var para apontar pro disco persistente em produção
+# (ex: Render Persistent Disk montado em /data). Sem a variável, cai no
+# comportamento local de sempre.
+MEDIA_ROOT = Path(config('MEDIA_ROOT', default=str(BASE_DIR / 'media')))
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 

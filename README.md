@@ -144,6 +144,31 @@ O frontend estará disponível em `http://localhost:3000/`, e espera encontrar a
 
 > **Importante**: com o backend e o frontend em portas/origens diferentes, o Django precisa do `django-cors-headers` habilitado e da origem do frontend (`http://localhost:3000` por padrão) listada em `CORS_ALLOWED_ORIGINS` no `.env` do backend — já configurado por padrão neste repositório.
 
+## ☁️ Deploy do backend (Render)
+
+O backend é hospedado no [Render](https://render.com) via Docker (necessário por causa do GDAL/PostGIS — o runtime Python nativo do Render não traz essas libs nativas). Arquivos envolvidos:
+
+- **`Dockerfile`**: instala GDAL/GEOS/PROJ via `apt` e casa a versão do binding Python dinamicamente (`pip install "GDAL==$(gdal-config --version)")`, evitando fixar uma versão que só existe no Windows. Roda `collectstatic` durante o build (o `preDeployCommand` do Render usa um container descartável, então não dá pra rodar lá).
+- **`render.yaml`**: Blueprint com o serviço web (`runtime: docker`), um Postgres gerenciado, e um **Persistent Disk** (1GB, montado em `/data`) para as imagens enviadas (`foto_principal`/`foto`/`foto_perfil`) sobreviverem a redeploys — o filesystem do container em si é efêmero.
+- **`.dockerignore`**: mantém a imagem enxuta (não inclui `.venv/`, `frontend/`, mídia local, etc.).
+
+### Passo a passo do primeiro deploy
+
+1. No Render, criar um Blueprint apontando para este repositório (usa `render.yaml` automaticamente).
+2. **Antes do primeiro deploy rodar as migrações**: abrir o "PSQL Command" do banco criado (dashboard do Render) e rodar:
+   ```sql
+   CREATE EXTENSION postgis;
+   ```
+   Sem isso, a migration do app `hortos` (que cria uma coluna geoespacial) falha.
+3. Preencher a env var `CORS_ALLOWED_ORIGINS` (marcada como manual no Blueprint) com a URL do frontend em produção — ex: `https://farmacias-vivas.vercel.app`.
+4. Depois do serviço no ar, criar um superusuário rodando `python manage.py createsuperuser` pelo shell do Render (aba "Shell" do serviço).
+
+> **Limitação do Persistent Disk**: só funciona com uma única instância do serviço (sem autoscale horizontal). Suficiente para o tamanho atual do projeto; se isso mudar, migrar `MEDIA_ROOT` para um object storage S3-compatível (Cloudflare R2, AWS S3) é o próximo passo natural.
+
+### Frontend (Vercel)
+
+O `frontend/` é deployado separadamente no Vercel (aponte o "Root Directory" do projeto Vercel para `frontend/`), com `NEXT_PUBLIC_API_URL` apontando para a URL do backend no Render.
+
 ## 📋 Backlog e Gestão Ágil
 
 O desenvolvimento segue práticas ágeis. Estado atual das funcionalidades:
@@ -153,7 +178,8 @@ O desenvolvimento segue práticas ágeis. Estado atual das funcionalidades:
 - [x] Integração de buscas por proximidade (Geolocalização) no app `hortos`.
 - [x] CRUD completo de Hortos, Instituições e Inventário.
 - [x] Frontend Next.js com catálogo público e painel de gestão.
-- [ ] Upload de imagens (foto de planta, horto e perfil) pelos formulários do painel.
+- [x] Upload de imagens (foto de planta, horto e perfil) pelos formulários do painel.
+- [x] Provisionamento do backend para deploy no Render (Docker + PostGIS + Persistent Disk).
 - [ ] Atribuição manual de responsável por horto para especialistas não-administradores.
 
 ---
